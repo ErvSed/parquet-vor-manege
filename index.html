@@ -107,7 +107,7 @@
   <div class="card"><div class="pwrap" id="pwrap"><div class="pstage" id="pstage"><canvas id="pcanvas"></canvas><canvas id="poverlay"></canvas></div></div></div>
   <div class="expbox" id="expBox" hidden>
     <div class="exphead"><b id="expTitle">Экспликация помещений</b><button id="expClose" type="button">×</button></div>
-    <img id="expImg" alt="Экспликация полов"><img id="expImg2" alt="Экспликация полов (продолжение)" hidden style="margin-top:14px">
+    <img id="expImg" alt="Экспликация полов"><img id="expImg2" alt="Экспликация полов (продолжение)" hidden style="margin-top:14px"><div id="expDesc" style="font-size:12px;color:#333;margin-top:10px;white-space:pre-wrap"></div>
   </div>
 </div>
 
@@ -166,6 +166,7 @@ function renderFT(){
     showPlan(r.plan);
     $("expImg").src="mini/ftypes/"+r.id+".png"; $("expImg2").hidden=true;
     $("expTitle").textContent="Экспликация пола — "+r.building+", тип "+r.type;
+    $("expDesc").textContent="Состав пола: "+(r.desc||"");
     $("expBox").hidden=false;
     document.querySelectorAll("#ftable tbody tr").forEach(x=>x.classList.remove("sel")); tr.classList.add("sel");
   });
