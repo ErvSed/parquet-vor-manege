@@ -62,6 +62,8 @@
   .ftable tr:hover{background:#f0f6fc}
   .ftable tr.sel{background:#dcebfa}
   .ftable td.num{text-align:right;white-space:nowrap}
+  .ftable td.desc{white-space:normal;min-width:430px;line-height:1.35}
+  .ftable{max-height:380px}
 </style>
 </head>
 <body>
@@ -160,7 +162,7 @@ function renderFT(){
   if(!list.length){ if(card) card.hidden=true; return; }
   card.hidden=false;
   $("ftable").innerHTML='<table><thead><tr><th>Тип</th><th>Этаж</th><th>Помещения</th><th>Площадь, м²</th><th>Состав пола</th></tr></thead><tbody>'+
-    list.map(r=>'<tr data-id="'+r.id+'"><td><b>'+esc(r.type)+'</b></td><td>'+(r.floor!=null?r.floor+" эт.":"—")+'</td><td>'+esc((r.rooms||[]).join(", "))+'</td><td class="num">'+(r.area!=null?r.area.toFixed(2):"—")+'</td><td>'+esc((r.desc||"").slice(0,90))+'…</td></tr>').join("")+'</tbody></table>';
+    list.map(r=>'<tr data-id="'+r.id+'"><td><b>'+esc(r.type)+'</b></td><td>'+(r.floor!=null?r.floor+" эт.":"—")+'</td><td>'+esc((r.rooms||[]).join(", "))+'</td><td class="num">'+(r.area!=null?r.area.toFixed(2):"—")+'</td><td class="desc">'+esc(r.desc||"")+'</td></tr>').join("")+'</tbody></table>';
   document.querySelectorAll("#ftable tbody tr").forEach(tr=>tr.onclick=()=>{
     const r=FT.find(x=>x.id===tr.dataset.id); if(!r) return;
     showPlan(r.plan);
