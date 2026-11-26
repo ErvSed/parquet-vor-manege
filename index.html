@@ -67,7 +67,7 @@
   <div class="tools">
     <div class="acts">
       <button id="editBtn" type="button">✎ Редактировать</button>
-      <button id="expBtn" type="button">Экспликация</button>
+      <button id="expBtn" type="button">Экспликация полов</button>
       <button id="refresh" type="button">Обновить</button>
       <span class="srv" id="srv">синхронизация…</span>
     </div>
@@ -97,7 +97,7 @@
   <div class="card"><div class="pwrap" id="pwrap"><div class="pstage" id="pstage"><canvas id="pcanvas"></canvas><canvas id="poverlay"></canvas></div></div></div>
   <div class="expbox" id="expBox" hidden>
     <div class="exphead"><b id="expTitle">Экспликация помещений</b><button id="expClose" type="button">×</button></div>
-    <img id="expImg" alt="Экспликация помещений">
+    <img id="expImg" alt="Экспликация полов"><img id="expImg2" alt="Экспликация полов (продолжение)" hidden style="margin-top:14px">
   </div>
 </div>
 
@@ -179,7 +179,7 @@ async function renderPlan(){
 }
 function showPlan(id){
   current=PLANS.find(p=>p.id===id)||PLANS[0];building=current.b;pts=[];cursor=null;selectedId=null;drag=null;down=null;
-  renderBuildingTabs();renderPlanTabs();$("expImg").src=current.exp;$("expTitle").textContent="Экспликация — "+current.b+", "+current.t;
+  renderBuildingTabs();renderPlanTabs();
   $("expBox").hidden=true;updateButtons();renderPlan();
 }
 function updateButtons(){
@@ -229,7 +229,12 @@ $("clear").onclick=()=>{if(!hatches.some(h=>h.plan===current.id))return;if(!conf
 $("savePng").onclick=()=>{const c=$("pcanvas"),o=$("poverlay");const t=document.createElement("canvas");t.width=c.width;t.height=c.height;const g=t.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,t.width,t.height);g.drawImage(c,0,0);g.drawImage(o,0,0);const a=document.createElement("a");a.download=current.b+"-"+current.t+".png";a.href=t.toDataURL("image/png");a.click();};
 $("fundo").onclick=()=>$("undoPoint").click();
 $("ffinish").onclick=()=>$("finish").click();
-$("expBtn").onclick=()=>{$("expBox").hidden=!$("expBox").hidden;};
+$("expBtn").onclick=()=>{
+  if(building==="Манеж"){ $("expImg").src="mini/exp/exp_manege.png"; $("expImg2").hidden=true; }
+  else { $("expImg").src="mini/exp/exp_stables1.png"; $("expImg2").src="mini/exp/exp_stables2.png"; $("expImg2").hidden=false; }
+  $("expTitle").textContent="Экспликация полов — "+building;
+  $("expBox").hidden=false;
+};
 $("expClose").onclick=()=>$("expBox").hidden=true;
 $("refresh").onclick=async()=>{const s=await serverLoad();if(s){hatches=s.hatches;lastTs=s.updatedAt||0;selectedId=null;drawOverlay();setStatus("обновлено","ok");}else setStatus("сервер недоступен","err");};
 $("zin").onclick=()=>setZoom(zoomP*1.25);$("zout").onclick=()=>setZoom(zoomP/1.25);$("zfit").onclick=()=>setZoom(1);
