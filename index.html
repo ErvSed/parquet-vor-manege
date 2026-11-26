@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+<title>Планы полов — Манеж и Конюшни</title>
+<style>
+  :root{--bg:#f5f6f8;--panel:#fff;--line:#d9dee5;--ink:#1d2733;--mut:#5b6b7c;--acc:#1f4e79;--acc2:#2d6da3}
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.45 -apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  header{background:var(--acc);color:#fff;padding:14px 20px}
+  header h1{margin:0;font-size:19px;font-weight:600}
+  header p{margin:6px 0 0;color:#cfe0ef;font-size:13px}
+  .navbtn{display:inline-flex;align-items:center;background:#fff;color:#1f4e79 !important;padding:7px 13px;border-radius:8px;font-weight:600;text-decoration:none;font-size:13px;margin-left:10px}
+  .wrap{padding:12px 18px 40px}
+  .btabs,.ptabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:9px;align-items:center}
+  .btab,.tab{padding:7px 13px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;font-size:13px}
+  .btab.on{background:var(--acc);border-color:var(--acc);color:#fff}
+  .tab.on{background:var(--acc2);border-color:var(--acc2);color:#fff}
+  .tools{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin-bottom:10px}
+  .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .acts button{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 11px;cursor:pointer;font-size:12.5px}
+  .acts button:disabled{opacity:.45;cursor:default}
+  .acts .danger{color:#a03030}
+  .srv{margin-left:auto;font-size:12px;color:var(--mut)}
+  .srv.ok{color:#1e7a3c}.srv.err{color:#b03030}
+  .legend{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+  .chip{display:flex;align-items:center;gap:6px;border:2px solid var(--line);background:#fff;border-radius:8px;padding:5px 9px;cursor:pointer;font-size:12.5px}
+  .chip.on{border-color:var(--acc);box-shadow:0 0 0 2px #bcd7ee inset}
+  .sw{width:22px;height:14px;border:1px solid rgba(0,0,0,.25);border-radius:3px}
+  .hint{color:var(--mut);font-size:12px;margin-top:6px}
+  .zoom{display:flex;gap:4px;align-items:center;margin-left:auto}
+  .zoom button{border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer;font-size:13px;padding:4px 9px;color:var(--acc2)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .pwrap{max-height:72vh;overflow:auto;background:#fff}
+  .pstage{position:relative;line-height:0;width:100%}
+  #pcanvas{display:block;width:100%;height:auto}
+  #poverlay{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
+  .expbox{margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px}
+  .expbox[hidden]{display:none}
+  .expbox img{width:100%;height:auto;display:block}
+  .exphead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:13px;color:var(--acc)}
+  .exphead button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:4px 9px;cursor:pointer}
+  .floatbar{position:fixed;left:0;right:0;bottom:0;display:none;gap:8px;align-items:center;padding:8px 12px;background:#fff;border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(0,0,0,.12);z-index:60}
+  .floatbar[hidden]{display:none !important}
+  .floatbar span{font-size:13px;color:var(--mut);min-width:52px}
+  .floatbar button{flex:1;min-height:46px;border-radius:9px;border:1px solid var(--line);background:#fff;font-size:14px;font-weight:600}
+  .floatbar #ffinish{background:var(--acc2);color:#fff;border-color:var(--acc2)}
+  @media(max-width:760px){
+    header{padding:10px 12px} header h1{font-size:16px} header p{font-size:12px}
+    .wrap{padding:8px 10px 100px}
+    .acts button{min-height:44px;font-size:13px}
+    .pwrap{max-height:60vh}
+    .floatbar{display:flex}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Планы полов — Манеж и Конюшни</h1>
+  <p>Экспликации помещений, планы этажей и разметка выполненных работ <a class="navbtn" href="https://ervsed.github.io/parquet-vor-palace/">← Дворец</a></p>
+</header>
+<div class="wrap">
+  <div class="btabs" id="btabs"></div>
+  <div class="ptabs" id="ptabs"></div>
+
+  <div class="tools">
+    <div class="acts">
+      <button id="editBtn" type="button">✎ Редактировать</button>
+      <button id="expBtn" type="button">Экспликация</button>
+      <button id="refresh" type="button">Обновить</button>
+      <span class="srv" id="srv">синхронизация…</span>
+    </div>
+    <h3 style="margin:10px 0 0;font-size:13px;color:var(--acc)">Примечание — виды работ</h3>
+    <div class="legend" id="legend"></div>
+    <div id="editPanel" hidden>
+      <div class="acts">
+        <button id="finish" type="button" disabled>Завершить область</button>
+        <button id="undoPoint" type="button" disabled>Убрать точку</button>
+        <button id="deleteSel" type="button" disabled>Удалить область</button>
+        <button id="clear" type="button" class="danger">Очистить план</button>
+        <button id="savePng" type="button">Скачать PNG</button>
+      </div>
+      <div class="hint">Нажмите на план по углам помещения, затем «Завершить область». Готовую область можно перетащить, потянуть за вершины, сменить вид работ или удалить.</div>
+    </div>
+    <div class="hint" id="viewHint">Просмотр: разметка видна всем. Чтобы менять штриховку, нажмите «Редактировать».</div>
+  </div>
+
+  <div class="ptabs" style="margin-bottom:8px">
+    <div class="zoom">
+      <button id="zout" type="button">−</button>
+      <button id="zfit" type="button">по ширине</button>
+      <button id="zin" type="button">+</button>
+    </div>
+  </div>
+
+  <div class="card"><div class="pwrap" id="pwrap"><div class="pstage" id="pstage"><canvas id="pcanvas"></canvas><canvas id="poverlay"></canvas></div></div></div>
+  <div class="expbox" id="expBox" hidden>
+    <div class="exphead"><b id="expTitle">Экспликация помещений</b><button id="expClose" type="button">×</button></div>
+    <img id="expImg" alt="Экспликация помещений">
+  </div>
+</div>
+
+<div class="floatbar" id="floatbar" hidden>
+  <span id="fcount">0 точек</span>
+  <button id="fundo" type="button">Убрать точку</button>
+  <button id="ffinish" type="button">Завершить область</button>
+</div>
+
+<script src="vendor/jspdf.umd.min.js"></script>
+<script src="vendor/pdf.min.js"></script>
+<script>
+const WORK_TYPES=[
+  {id:"antisept",label:"Антисептирование",color:"#b517ff"},
+  {id:"logs",label:"Устройство лаг",color:"#ff6a00"},
+  {id:"ply1",label:"Фанера, 1-й слой",color:"#0077ff"},
+  {id:"ply2",label:"Фанера, 2-й слой",color:"#00c9b7"},
+  {id:"parquet",label:"Укладка паркета",color:"#ff1f3d"},
+  {id:"sanding",label:"Шлифовка",color:"#ffd400"},
+  {id:"varnish",label:"Лакировка",color:"#00d95f"},
+  {id:"skirting",label:"Устройство плинтусов",color:"#78909c"}
+];
+const PLANS=[
+ {id:"m1",b:"Манеж",t:"1 этаж",w:2526,h:1191,plan:"mini/plans/m1.pdf",exp:"mini/exp/m1.png"},
+ {id:"m2",b:"Манеж",t:"Антресоли",w:2526,h:1191,plan:"mini/plans/m2.pdf",exp:"mini/exp/m2.png"},
+ {id:"k1",b:"Конюшни",t:"1 этаж",w:1684,h:2384,plan:"mini/plans/k1.pdf",exp:"mini/exp/k1.png"},
+ {id:"k2",b:"Конюшни",t:"2 этаж",w:1684,h:2384,plan:"mini/plans/k2.pdf",exp:"mini/exp/k2.png"},
+ {id:"k3",b:"Конюшни",t:"3 этаж",w:1684,h:2384,plan:"mini/plans/k3.pdf",exp:"mini/exp/k3.png"},
+ {id:"k4",b:"Конюшни",t:"Техподполье",w:1684,h:2384,plan:"mini/plans/k4.pdf",exp:"mini/exp/k4.png"}
+];
+const SERVER="https://kvdb.io/YWo4XUH1PZw315FFv1HS7q/manege_hatches_v1";
+const LS="manege_hatches_v1";
+let building="Манеж", current=PLANS[0], hatches=[], editing=false, selectedId=null, selectedType=WORK_TYPES[0].id;
+let pts=[], cursor=null, drag=null, down=null, moved=false, zoomP=1, token=0, lastTs=0, saveTimer=null;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const colorOf=id=>{const t=WORK_TYPES.find(x=>x.id===id);return t?t.color:"#555";};
+const uid=()=>"h"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function setStatus(t,c){const e=$("srv");e.textContent=t;e.className="srv"+(c?" "+c:"");}
+async function fetchRetry(url,opts,tries){tries=tries||3;let last;for(let i=0;i<tries;i++){try{return await fetch(url,opts);}catch(e){last=e;await new Promise(r=>setTimeout(r,600*(i+1)));}}throw last;}
+async function serverLoad(){try{const r=await fetchRetry(SERVER,{cache:"no-store"},3);if(r.status===404)return {updatedAt:0,hatches:[]};if(!r.ok)throw 0;const t=await r.text();if(!t)return {updatedAt:0,hatches:[]};const j=JSON.parse(t);return {updatedAt:j.updatedAt||0,hatches:Array.isArray(j.hatches)?j.hatches:[]};}catch(e){return null;}}
+async function serverSave(){const ts=Date.now();lastTs=ts;const body=JSON.stringify({updatedAt:ts,hatches});try{const r=await fetchRetry(SERVER,{method:"PUT",headers:{"Content-Type":"application/json"},body},3);if(!r.ok)throw 0;setStatus("сохранено на сервере","ok");localStorage.setItem(LS,body);}catch(e){setStatus("сервер недоступен — сохранено локально","err");localStorage.setItem(LS,body);}}
+function saveSoon(){setStatus("сохранение…");clearTimeout(saveTimer);saveTimer=setTimeout(serverSave,500);}
+function loadLocal(){try{const s=localStorage.getItem(LS);if(s)hatches=JSON.parse(s).hatches||[];}catch(e){}}
+
+function renderBuildingTabs(){
+  const bs=[...new Set(PLANS.map(p=>p.b))];
+  $("btabs").innerHTML=bs.map(b=>'<button class="btab'+(b===building?' on':'')+'" data-b="'+esc(b)+'">'+esc(b)+'</button>').join("");
+  document.querySelectorAll("#btabs .btab").forEach(b=>b.onclick=()=>{building=b.dataset.b;renderBuildingTabs();renderPlanTabs();const first=PLANS.find(p=>p.b===building);showPlan(first.id);});
+}
+function renderPlanTabs(){
+  const list=PLANS.filter(p=>p.b===building);
+  $("ptabs").innerHTML=list.map(p=>'<button class="tab'+(p.id===current.id?' on':'')+'" data-id="'+p.id+'">'+esc(p.t)+'</button>').join("");
+  document.querySelectorAll("#ptabs .tab").forEach(b=>b.onclick=()=>showPlan(b.dataset.id));
+}
+function renderLegend(){
+  $("legend").innerHTML=WORK_TYPES.map(t=>'<button type="button" class="chip'+(t.id===selectedType?' on':'')+'" data-id="'+t.id+'"><span class="sw" style="background:repeating-linear-gradient(45deg,'+t.color+' 0 3px,#fff 3px 7px)"></span>'+esc(t.label)+'</button>').join("");
+  document.querySelectorAll("#legend .chip").forEach(b=>b.onclick=()=>{selectedType=b.dataset.id;if(selectedId){const h=hatches.find(x=>x.id===selectedId);if(h){h.type=selectedType;saveSoon();}}renderLegend();drawOverlay();});
+}
+function setZoom(z){zoomP=Math.min(4,Math.max(1,z));$("pstage").style.width=(zoomP*100)+"%";const w=$("pwrap");if(w)requestAnimationFrame(()=>{if(zoomP===1){w.scrollLeft=0;w.scrollTop=0;}w.scrollLeft=Math.min(w.scrollLeft,Math.max(0,w.scrollWidth-w.clientWidth));w.scrollTop=Math.min(w.scrollTop,Math.max(0,w.scrollHeight-w.clientHeight));});}
+function toPage(ev){const c=$("pcanvas"),r=c.getBoundingClientRect();return [Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width))*current.w,Math.max(0,Math.min(1,(ev.clientY-r.top)/r.height))*current.h];}
+function syncOverlay(){const c=$("pcanvas"),o=$("poverlay");if(c.width&&o.width!==c.width){o.width=c.width;o.height=c.height;}}
+function makePattern(ctx,color){const pc=document.createElement("canvas");pc.width=14;pc.height=14;const g=pc.getContext("2d");g.strokeStyle=color;g.lineWidth=2.4;g.beginPath();g.moveTo(-3,14);g.lineTo(14,-3);g.moveTo(4,17);g.lineTo(17,4);g.moveTo(-10,7);g.lineTo(7,-10);g.stroke();return ctx.createPattern(pc,"repeat");}
+function drawOverlay(){
+  const o=$("poverlay");if(!o.width)return;const ctx=o.getContext("2d");ctx.clearRect(0,0,o.width,o.height);const sc=o.width/current.w;ctx.save();ctx.scale(sc,sc);
+  const draw=(points,type,sel,preview)=>{if(!points.length)return;ctx.save();ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));if(points.length>2)ctx.closePath();if(points.length>2){ctx.globalAlpha=preview?0.3:0.72;ctx.fillStyle=makePattern(ctx,colorOf(type));ctx.fill();}ctx.globalAlpha=1;ctx.lineWidth=sel?2.2:1.8;ctx.setLineDash(sel?[8,5]:[]);ctx.strokeStyle=sel?"#111":colorOf(type);ctx.stroke();ctx.setLineDash([]);if(sel){ctx.fillStyle="#fff";ctx.strokeStyle="#111";ctx.lineWidth=1.4;points.forEach(p=>{ctx.beginPath();ctx.arc(p[0],p[1],4,0,Math.PI*2);ctx.fill();ctx.stroke();});}if(preview){ctx.fillStyle=colorOf(type);points.forEach(p=>{ctx.beginPath();ctx.arc(p[0],p[1],3,0,Math.PI*2);ctx.fill();});}ctx.restore();};
+  hatches.filter(h=>h.plan===current.id).forEach(h=>draw(h.pts,h.type,h.id===selectedId,false));
+  if(pts.length){const pv=cursor?pts.concat([[cursor[0],cursor[1]]]):pts.slice();draw(pv,selectedType,false,true);}
+  ctx.restore();
+}
+async function renderPlan(){
+  const c=$("pcanvas"),my=++token;
+  try{
+    const doc=await pdfjsLib.getDocument(current.plan).promise;const page=await doc.getPage(1);const vp0=page.getViewport({scale:1});const scale=4800/vp0.width;const vp=page.getViewport({scale});
+    if(my!==token)return;c.width=Math.floor(vp.width);c.height=Math.floor(vp.height);
+    await page.render({canvasContext:c.getContext("2d"),viewport:vp}).promise;
+    if(my!==token)return;syncOverlay();setZoom(1);drawOverlay();
+  }catch(e){console.warn(e);}
+}
+function showPlan(id){
+  current=PLANS.find(p=>p.id===id)||PLANS[0];building=current.b;pts=[];cursor=null;selectedId=null;drag=null;down=null;
+  renderBuildingTabs();renderPlanTabs();$("expImg").src=current.exp;$("expTitle").textContent="Экспликация — "+current.b+", "+current.t;
+  $("expBox").hidden=true;updateButtons();renderPlan();
+}
+function updateButtons(){
+  $("finish").disabled=!editing||pts.length<3;
+  $("undoPoint").disabled=!editing||!pts.length;
+  $("deleteSel").disabled=!editing||!selectedId;
+  const fb=$("floatbar");if(!editing||!pts.length){fb.hidden=true;}else{fb.hidden=false;$("fcount").textContent=pts.length+" т.";}
+}
+function nearVertex(h,p,thr){for(let i=0;i<h.pts.length;i++){if(Math.hypot(h.pts[i][0]-p[0],h.pts[i][1]-p[1])<=thr)return i;}return -1;}
+function hitTest(p){const list=hatches.filter(h=>h.plan===current.id);for(let i=list.length-1;i>=0;i--){const poly=list[i].pts;let ins=false;for(let a=0,b=poly.length-1;a<poly.length;b=a++){const xi=poly[a][0],yi=poly[a][1],xj=poly[b][0],yj=poly[b][1];if(((yi>p[1])!==(yj>p[1]))&&(p[0]<(xj-xi)*(p[1]-yi)/(yj-yi)+xi))ins=!ins;}if(ins)return list[i];}return null;}
+
+$("pcanvas").addEventListener("pointerdown",ev=>{
+  if(!editing)return;
+  if(ev.pointerType==="touch"&&ev.isPrimary===false)return;
+  down={x:ev.clientX,y:ev.clientY};moved=false;const p=toPage(ev);
+  const sel=hatches.find(h=>h.id===selectedId&&h.plan===current.id);
+  if(sel){const vi=nearVertex(sel,p,current.w*0.03);if(vi>=0){drag={mode:"vertex",id:sel.id,idx:vi,start:p,orig:sel.pts.map(q=>[q[0],q[1]])};return;}}
+  const h=hitTest(p);if(h){selectedId=h.id;drag={mode:"move",id:h.id,start:p,orig:h.pts.map(q=>[q[0],q[1]])};updateButtons();drawOverlay();}
+});
+$("pcanvas").addEventListener("pointermove",ev=>{
+  if(!editing)return;
+  if(down&&Math.hypot(ev.clientX-down.x,ev.clientY-down.y)>8)moved=true;
+  const p=toPage(ev);
+  if(drag){const h=hatches.find(x=>x.id===drag.id);if(!h)return;if(drag.mode==="move"){const dx=p[0]-drag.start[0],dy=p[1]-drag.start[1];h.pts=drag.orig.map(q=>[q[0]+dx,q[1]+dy]);}else{h.pts=drag.orig.map((q,i)=>i===drag.idx?[p[0],p[1]]:[q[0],q[1]]);}drawOverlay();return;}
+  if(pts.length){cursor=p;drawOverlay();}
+});
+$("pcanvas").addEventListener("pointerup",ev=>{
+  if(!editing)return;
+  if(drag){drag=null;down=null;saveSoon();updateButtons();drawOverlay();return;}
+  if(!down)return;const wasMoved=moved;down=null;if(wasMoved)return;
+  const p=toPage(ev);const h=hitTest(p);if(h){selectedId=h.id;updateButtons();drawOverlay();return;}
+  selectedId=null;pts.push(p);cursor=p;updateButtons();drawOverlay();
+});
+$("pcanvas").addEventListener("pointercancel",()=>{drag=null;down=null;moved=false;});
+
+function setEditing(on){
+  editing=!!on;$("editPanel").hidden=!editing;$("viewHint").hidden=editing;
+  const b=$("editBtn");b.textContent=editing?"✓ Готово":"✎ Редактировать";b.classList.toggle("on",editing);
+  if(!editing){pts=[];cursor=null;selectedId=null;drag=null;down=null;drawOverlay();}
+  updateButtons();
+}
+$("editBtn").onclick=()=>setEditing(!editing);
+$("finish").onclick=()=>{if(pts.length<3)return;const h={id:uid(),plan:current.id,type:selectedType,pts:pts.map(p=>[+p[0].toFixed(1),+p[1].toFixed(1)])};hatches.push(h);selectedId=h.id;pts=[];cursor=null;saveSoon();updateButtons();drawOverlay();};
+$("undoPoint").onclick=()=>{pts.pop();updateButtons();drawOverlay();};
+$("deleteSel").onclick=()=>{if(!selectedId)return;hatches=hatches.filter(h=>h.id!==selectedId);selectedId=null;saveSoon();updateButtons();drawOverlay();};
+$("clear").onclick=()=>{if(!hatches.some(h=>h.plan===current.id))return;if(!confirm("Убрать всю штриховку на этом плане?"))return;hatches=hatches.filter(h=>h.plan!==current.id);selectedId=null;saveSoon();updateButtons();drawOverlay();};
+$("savePng").onclick=()=>{const c=$("pcanvas"),o=$("poverlay");const t=document.createElement("canvas");t.width=c.width;t.height=c.height;const g=t.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,t.width,t.height);g.drawImage(c,0,0);g.drawImage(o,0,0);const a=document.createElement("a");a.download=current.b+"-"+current.t+".png";a.href=t.toDataURL("image/png");a.click();};
+$("fundo").onclick=()=>$("undoPoint").click();
+$("ffinish").onclick=()=>$("finish").click();
+$("expBtn").onclick=()=>{$("expBox").hidden=!$("expBox").hidden;};
+$("expClose").onclick=()=>$("expBox").hidden=true;
+$("refresh").onclick=async()=>{const s=await serverLoad();if(s){hatches=s.hatches;lastTs=s.updatedAt||0;selectedId=null;drawOverlay();setStatus("обновлено","ok");}else setStatus("сервер недоступен","err");};
+$("zin").onclick=()=>setZoom(zoomP*1.25);$("zout").onclick=()=>setZoom(zoomP/1.25);$("zfit").onclick=()=>setZoom(1);
+
+async function exportPdf(){
+  if(!window.jspdf){alert("PDF-библиотека не загружена");return;}
+  const {jsPDF}=window.jspdf;const doc=new jsPDF({orientation:"landscape",unit:"mm",format:"a4"});
+  const S=2,W=2970,H=2100;const now=new Date();const dmy=now.toLocaleDateString("ru-RU");
+  const iso=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");
+  for(const p of PLANS){
+    const pdf=await pdfjsLib.getDocument(p.plan).promise;const page=await pdf.getPage(1);const vp0=page.getViewport({scale:1});const vp=page.getViewport({scale:4800/vp0.width});
+    const pc=document.createElement("canvas");pc.width=Math.floor(vp.width);pc.height=Math.floor(vp.height);await page.render({canvasContext:pc.getContext("2d"),viewport:vp}).promise;
+    if(hatches.some(h=>h.plan===p.id)){const o=document.createElement("canvas");o.width=pc.width;o.height=pc.height;const g=o.getContext("2d");const sc=pc.width/p.w;hatches.filter(h=>h.plan===p.id).forEach(h=>{g.beginPath();h.pts.forEach((q,i)=>i?g.lineTo(q[0]*sc,q[1]*sc):g.moveTo(q[0]*sc,q[1]*sc));g.closePath();g.globalAlpha=0.72;g.fillStyle=colorOf(h.type);g.fill();g.globalAlpha=1;g.lineWidth=Math.max(3,sc*0.9);g.strokeStyle=colorOf(h.type);g.stroke();});pc.getContext("2d").drawImage(o,0,0);}
+    const pageC=document.createElement("canvas");pageC.width=W*2;pageC.height=H*2;const g=pageC.getContext("2d");g.scale(S,S);g.fillStyle="#fff";g.fillRect(0,0,W,H);
+    g.fillStyle="#1f4e79";g.font="bold 58px Arial";g.fillText(p.b+" — "+p.t,110,100);g.fillStyle="#666";g.font="30px Arial";g.fillText("Дата выгрузки: "+dmy,110,145);
+    const aw=W-220,ah=H-260,sc=Math.min(aw/pc.width,ah/pc.height);g.drawImage(pc,(W-pc.width*sc)/2,190,pc.width*sc,pc.height*sc);
+    doc.addImage(pageC.toDataURL("image/jpeg",0.9),"JPEG",0,0,297,210);if(p!==PLANS[PLANS.length-1])doc.addPage();
+  }
+  doc.save("Планы_Манеж_Конюшни_"+iso+".pdf");
+}
+
+document.addEventListener("DOMContentLoaded",async()=>{
+  pdfjsLib.GlobalWorkerOptions.workerSrc="vendor/pdf.worker.min.js";
+  renderLegend();loadLocal();
+  const srv=await serverLoad();if(srv){hatches=srv.hatches;lastTs=srv.updatedAt||0;setStatus("загружено с сервера","ok");}else setStatus("сервер недоступен — локально");
+  renderBuildingTabs();showPlan(PLANS[0].id);
+  const eb=document.createElement("button");eb.type="button";eb.textContent="Экспорт PDF (все планы)";eb.onclick=exportPdf;$("refresh").after(eb);
+  setInterval(async()=>{if(document.hidden||drag||pts.length)return;const s=await serverLoad();if(s&&(s.updatedAt||0)>lastTs){lastTs=s.updatedAt;hatches=s.hatches;selectedId=null;drawOverlay();setStatus("обновлено с сервера","ok");}},20000);
+});
+</script>
+</body>
+</html>
