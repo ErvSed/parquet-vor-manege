@@ -53,6 +53,15 @@
     .pwrap{max-height:60vh}
     .floatbar{display:flex}
   }
+
+  .ftable{max-height:260px;overflow:auto}
+  .ftable table{width:100%;border-collapse:collapse;font-size:12px}
+  .ftable th,.ftable td{border-bottom:1px solid var(--line);padding:5px 7px;text-align:left}
+  .ftable th{position:sticky;top:0;background:#eaf0f6;color:var(--acc);font-weight:600}
+  .ftable tr{cursor:pointer}
+  .ftable tr:hover{background:#f0f6fc}
+  .ftable tr.sel{background:#dcebfa}
+  .ftable td.num{text-align:right;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -62,6 +71,7 @@
 </header>
 <div class="wrap">
   <div class="btabs" id="btabs"></div>
+  <div class="card" id="ftableCard" style="margin-bottom:10px" hidden><div class="ftable" id="ftable"></div></div>
   <div class="ptabs" id="ptabs"></div>
 
   <div class="tools">
@@ -130,7 +140,7 @@ const PLANS=[
 ];
 const SERVER="https://kvdb.io/YWo4XUH1PZw315FFv1HS7q/manege_hatches_v1";
 const LS="manege_hatches_v1";
-let building="Манеж", current=PLANS[0], hatches=[], editing=false, selectedId=null, selectedType=WORK_TYPES[0].id;
+let FT=[], building="Манеж", current=PLANS[0], hatches=[], editing=false, selectedId=null, selectedType=WORK_TYPES[0].id;
 let pts=[], cursor=null, drag=null, down=null, moved=false, zoomP=1, token=0, lastTs=0, saveTimer=null;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -143,10 +153,28 @@ async function serverSave(){const ts=Date.now();lastTs=ts;const body=JSON.string
 function saveSoon(){setStatus("сохранение…");clearTimeout(saveTimer);saveTimer=setTimeout(serverSave,500);}
 function loadLocal(){try{const s=localStorage.getItem(LS);if(s)hatches=JSON.parse(s).hatches||[];}catch(e){}}
 
+
+function renderFT(){
+  const list=FT.filter(r=>r.building===building);
+  const card=$("ftableCard");
+  if(!list.length){ if(card) card.hidden=true; return; }
+  card.hidden=false;
+  $("ftable").innerHTML='<table><thead><tr><th>Тип</th><th>Этаж</th><th>Помещения</th><th>Площадь, м²</th><th>Состав пола</th></tr></thead><tbody>'+
+    list.map(r=>'<tr data-id="'+r.id+'"><td><b>'+esc(r.type)+'</b></td><td>'+(r.floor!=null?r.floor+" эт.":"—")+'</td><td>'+esc((r.rooms||[]).join(", "))+'</td><td class="num">'+(r.area!=null?r.area.toFixed(2):"—")+'</td><td>'+esc((r.desc||"").slice(0,90))+'…</td></tr>').join("")+'</tbody></table>';
+  document.querySelectorAll("#ftable tbody tr").forEach(tr=>tr.onclick=()=>{
+    const r=FT.find(x=>x.id===tr.dataset.id); if(!r) return;
+    showPlan(r.plan);
+    $("expImg").src="mini/ftypes/"+r.id+".png"; $("expImg2").hidden=true;
+    $("expTitle").textContent="Экспликация пола — "+r.building+", тип "+r.type;
+    $("expBox").hidden=false;
+    document.querySelectorAll("#ftable tbody tr").forEach(x=>x.classList.remove("sel")); tr.classList.add("sel");
+  });
+}
+
 function renderBuildingTabs(){
   const bs=[...new Set(PLANS.map(p=>p.b))];
   $("btabs").innerHTML=bs.map(b=>'<button class="btab'+(b===building?' on':'')+'" data-b="'+esc(b)+'">'+esc(b)+'</button>').join("");
-  document.querySelectorAll("#btabs .btab").forEach(b=>b.onclick=()=>{building=b.dataset.b;renderBuildingTabs();renderPlanTabs();const first=PLANS.find(p=>p.b===building);showPlan(first.id);});
+  document.querySelectorAll("#btabs .btab").forEach(b=>b.onclick=()=>{building=b.dataset.b;renderBuildingTabs();renderPlanTabs();renderFT();const first=PLANS.find(p=>p.b===building);showPlan(first.id);});
 }
 function renderPlanTabs(){
   const list=PLANS.filter(p=>p.b===building);
@@ -260,7 +288,8 @@ document.addEventListener("DOMContentLoaded",async()=>{
   pdfjsLib.GlobalWorkerOptions.workerSrc="vendor/pdf.worker.min.js";
   renderLegend();loadLocal();
   const srv=await serverLoad();if(srv){hatches=srv.hatches;lastTs=srv.updatedAt||0;setStatus("загружено с сервера","ok");}else setStatus("сервер недоступен — локально");
-  renderBuildingTabs();showPlan(PLANS[0].id);
+  try{ FT=await fetch("types.json").then(r=>r.json()); }catch(e){ console.warn(e); }
+  renderBuildingTabs();renderFT();showPlan(PLANS[0].id);
   const eb=document.createElement("button");eb.type="button";eb.textContent="Экспорт PDF (все планы)";eb.onclick=exportPdf;$("refresh").after(eb);
   setInterval(async()=>{if(document.hidden||drag||pts.length)return;const s=await serverLoad();if(s&&(s.updatedAt||0)>lastTs){lastTs=s.updatedAt;hatches=s.hatches;selectedId=null;drawOverlay();setStatus("обновлено с сервера","ok");}},20000);
 });
